@@ -113,9 +113,7 @@ export function formatWaterfallReportMarkdown(report: WaterfallReport): string {
       ? `${Math.round(item.transferSizeBytes / 1024)} KB`
       : 'Cached';
 
-    // Shorten URL for display
-    const shortUrl = item.name.length > 50 ? item.name.slice(0, 47) + '...' : item.name;
-    lines.push(`| \`${shortUrl}\` | ${item.category} | ${Math.round(item.durationMs)}ms | ${displaySize} | ${status} |`);
+    lines.push(`| \`${item.name}\` | ${item.category} | ${Math.round(item.durationMs)}ms | ${displaySize} | ${status} |`);
   }
 
   return lines.join('\n');

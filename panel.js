@@ -725,8 +725,7 @@ function renderWaterfallTab() {
           else if (b > 500*1024 && (e.name.includes('.js') || e.initiatorType === 'script')) { isB = true; reason = 'Script > 500KB'; }
           else if (d > 2500) { isB = true; reason = 'Slow > 2.5s'; }
           if (isB) bottlenecks++;
-          const short = e.name.length > 50 ? e.name.slice(0, 47) + '...' : e.name;
-          lines.push(short + ' | ' + (e.initiatorType || 'other') + ' | ' + d + 'ms | ' + Math.round(b/1024) + 'KB | ' + reason);
+          lines.push(e.name + ' | ' + (e.initiatorType || 'other') + ' | ' + d + 'ms | ' + Math.round(b/1024) + 'KB | ' + reason);
         }
         lines.unshift('Score: ' + Math.max(0, 100 - (bottlenecks * 12)) + '/100 | Transferred: ' + Math.round(total/1024) + 'KB | Bottlenecks: ' + bottlenecks);
         return lines.join('\\n');

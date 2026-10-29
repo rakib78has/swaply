@@ -3668,19 +3668,22 @@ async function handleRunWaterfall() {
 
     report.items.forEach(item => {
       const row = document.createElement("div");
-      row.style.cssText = `padding: 5px 10px; margin-bottom: 4px; border-radius: 6px; font-size: 11px; border: 1px solid ${item.isBottleneck ? 'rgba(239, 68, 68, 0.4)' : 'var(--border)'}; background: ${item.isBottleneck ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.02)'};`;
-      const shortUrl = item.name.length > 45 ? item.name.slice(0, 42) + '...' : item.name;
+      row.style.cssText = `padding: 6px 10px; margin-bottom: 5px; border-radius: 6px; font-size: 11px; border: 1px solid ${item.isBottleneck ? 'rgba(239, 68, 68, 0.4)' : 'var(--border)'}; background: ${item.isBottleneck ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.02)'};`;
       const sizeText = item.transferSizeBytes > 0 ? `${Math.round(item.transferSizeBytes / 1024)} KB` : 'Cached';
       row.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
-          <strong style="color: ${item.isBottleneck ? '#f87171' : '#38bdf8'};">${escapeHtml(shortUrl)}</strong>
-          <span>${item.durationMs}ms</span>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom: 3px;">
+          <strong class="full-url-text" style="color: ${item.isBottleneck ? '#f87171' : '#38bdf8'}; word-break: break-all; line-height: 1.35; flex: 1; cursor: pointer; user-select: all;" title="Click to copy full API URL&#10;${escapeHtml(item.name)}">${escapeHtml(item.name)}</strong>
+          <span style="white-space: nowrap; font-weight: 700; color: ${item.durationMs > 1000 ? '#ef4444' : '#f8fafc'}; font-size: 11px;">${item.durationMs}ms</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top: 2px;">
           <span>[${item.category}] ${sizeText}</span>
           <span style="color: ${item.isBottleneck ? '#ef4444' : '#10b981'}; font-weight:600;">${item.isBottleneck ? item.bottleneckReason : 'Optimal'}</span>
         </div>
       `;
+      row.querySelector('.full-url-text')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(item.name);
+        showToast("Copied full API URL to clipboard!", "success");
+      });
       elements.waterfallResults.appendChild(row);
     });
 
@@ -3902,18 +3905,21 @@ async function handleRunCrawler() {
 
     report.assets.forEach(a => {
       const row = document.createElement("div");
-      row.style.cssText = `padding: 5px 10px; margin-bottom: 4px; border-radius: 6px; font-size: 11px; border: 1px solid ${a.isBroken ? 'rgba(239, 68, 68, 0.4)' : (a.isMixedContent ? 'rgba(245, 158, 11, 0.4)' : 'var(--border)')}; background: ${a.isBroken ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.02)'};`;
-      const shortUrl = a.url.length > 45 ? a.url.slice(0, 42) + '...' : a.url;
+      row.style.cssText = `padding: 6px 10px; margin-bottom: 5px; border-radius: 6px; font-size: 11px; border: 1px solid ${a.isBroken ? 'rgba(239, 68, 68, 0.4)' : (a.isMixedContent ? 'rgba(245, 158, 11, 0.4)' : 'var(--border)')}; background: ${a.isBroken ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.02)'};`;
       row.innerHTML = `
-        <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
-          <strong style="color: ${a.isBroken ? '#f87171' : '#f8fafc'};">${escapeHtml(shortUrl)}</strong>
-          <span style="color: ${a.isBroken ? '#ef4444' : '#10b981'}; font-weight:700;">${a.isBroken ? '404 BROKEN' : 'OK'}</span>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom: 3px;">
+          <strong class="full-crawler-url" style="color: ${a.isBroken ? '#f87171' : '#f8fafc'}; word-break: break-all; line-height: 1.35; flex: 1; cursor: pointer; user-select: all;" title="Click to copy full asset URL&#10;${escapeHtml(a.url)}">${escapeHtml(a.url)}</strong>
+          <span style="white-space: nowrap; color: ${a.isBroken ? '#ef4444' : '#10b981'}; font-weight:700;">${a.isBroken ? '404 BROKEN' : 'OK'}</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top: 2px;">
           <span>[${a.type}] <code>${escapeHtml(a.elementSelector)}</code></span>
           <span style="color: ${a.isMixedContent ? '#f59e0b' : '#64748b'};">${a.isMixedContent ? '⚠️ Mixed HTTP' : 'Secure'}</span>
         </div>
       `;
+      row.querySelector('.full-crawler-url')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(a.url);
+        showToast("Copied full asset URL to clipboard!", "success");
+      });
       elements.crawlerResults.appendChild(row);
     });
 

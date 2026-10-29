@@ -60,8 +60,7 @@ export function formatCrawlReportMarkdown(report: AssetCrawlReport): string {
     for (const a of report.assets) {
       const statusIcon = a.isBroken ? `🔴 BROKEN (${a.status || 'Fail'})` : '🟢 OK';
       const mixed = a.isMixedContent ? '⚠️ INSECURE HTTP' : 'Secure';
-      const shortUrl = a.url.length > 55 ? a.url.slice(0, 52) + '...' : a.url;
-      lines.push(`| \`${shortUrl}\` | ${a.type} | ${statusIcon} | ${mixed} | \`${a.elementSelector}\` |`);
+      lines.push(`| \`${a.url}\` | ${a.type} | ${statusIcon} | ${mixed} | \`${a.elementSelector}\` |`);
     }
   }
 
