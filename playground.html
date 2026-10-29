@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QASwitch Test Playground - Multi-Role Auth App</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #111827;
+      --border: #1f2937;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --indigo: #6366f1;
+      --emerald: #10b981;
+      --rose: #ef4444;
+      --amber: #f59e0b;
+      --purple: #a855f7;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 32px 20px; line-height: 1.5; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+    header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; }
+    .badge { padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+
+    .role-banner {
+      padding: 18px 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .role-guest { background: rgba(156, 163, 175, 0.1); border-color: rgba(156, 163, 175, 0.25); color: #d1d5db; }
+    .role-admin { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
+    .role-user { background: rgba(99, 102, 241, 0.12); border-color: rgba(99, 102, 241, 0.35); color: #c7d2fe; }
+    .role-vip { background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.35); color: #e9d5ff; }
+
+    .role-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .role-desc { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .card-title { font-size: 15px; font-weight: 600; color: #ffffff; display: flex; align-items: center; gap: 8px; }
+
+    .btn-group { display: flex; flex-wrap: wrap; gap: 10px; }
+    .btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-admin { background: var(--rose); color: white; }
+    .btn-admin:hover { filter: brightness(1.1); }
+    .btn-user { background: var(--indigo); color: white; }
+    .btn-user:hover { filter: brightness(1.1); }
+    .btn-vip { background: var(--purple); color: white; }
+    .btn-vip:hover { filter: brightness(1.1); }
+    .btn-logout { background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-muted); }
+    .btn-logout:hover { background: rgba(255, 255, 255, 0.05); color: var(--text); }
+
+    .state-inspector {
+      background: #060911;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .instructions {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px dashed rgba(99, 102, 241, 0.3);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .instructions ol { margin-left: 20px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <span>🧪 QASwitch Headed Test Playground</span>
+      </div>
+      <span class="badge" id="originBadge"></span>
+    </header>
+
+    <!-- Visual Role State Indicator -->
+    <div class="role-banner role-guest" id="roleBanner">
+      <div>
+        <div class="role-title" id="roleTitle">👤 Logged Out (Guest State)</div>
+        <div class="role-desc" id="roleDesc">No active session tokens or authenticated user state detected.</div>
+      </div>
+      <span class="badge" id="rolePill">GUEST</span>
+    </div>
+
+    <!-- Instructions for Headed Testing -->
+    <div class="instructions">
+      <strong>🎯 How to test with QASwitch in Headed Mode:</strong>
+      <ol>
+        <li>Click <strong>"Log In as Admin"</strong> below &rarr; Open the <strong>QASwitch</strong> extension in Chrome's toolbar &rarr; Save as <code>Admin</code>.</li>
+        <li>Click <strong>"Log In as Regular User"</strong> below &rarr; Open <strong>QASwitch</strong> &rarr; Save as <code>Regular User</code>.</li>
+        <li>Open <strong>QASwitch</strong> and click <strong>"Switch"</strong> on <code>Admin</code> &rarr; Watch the page reload and instantly transform back into the Admin Dashboard!</li>
+      </ol>
+    </div>
+
+    <!-- Quick Role Simulators -->
+    <div class="card">
+      <div class="card-title">⚡ Simulate Application Authentication</div>
+      <div class="btn-group">
+        <button class="btn btn-admin" id="loginAdminBtn">👑 Log In as Admin</button>
+        <button class="btn btn-user" id="loginUserBtn">👤 Log In as Regular User</button>
+        <button class="btn btn-vip" id="loginVipBtn">💎 Log In as VIP Member</button>
+        <button class="btn btn-logout" id="logoutBtn">🚪 Log Out</button>
+      </div>
+    </div>
+
+    <!-- Live Cookies & Storage Inspector -->
+    <div class="card">
+      <div class="card-title">🔍 Active State Inspector (Updated in Real-Time)</div>
+      <div>
+        <strong style="font-size: 12px; color: var(--text-muted);">COOKIES (document.cookie):</strong>
+        <div class="state-inspector" id="cookieDump">None</div>
+      </div>
+      <div>
+        <strong style="font-size: 12px; color: var(--text-muted);">LOCAL STORAGE (window.localStorage):</strong>
+        <div class="state-inspector" id="storageDump">None</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('originBadge').textContent = window.location.host || 'Local File';
+
+    function setCookie(name, value, days = 7) {
+      const expires = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
+    }
+
+    function clearCookie(name) {
+      document.cookie = name + '=; Max-Age=-99999999; path=/;';
+    }
+
+    function inspectState() {
+      // Cookies
+      const cookies = document.cookie;
+      document.getElementById('cookieDump').textContent = cookies || '(No cookies found on domain)';
+
+      // Storage
+      const localDump = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k) localDump[k] = localStorage.getItem(k);
+      }
+      document.getElementById('storageDump').textContent = Object.keys(localDump).length
+        ? JSON.stringify(localDump, null, 2)
+        : '(localStorage is empty)';
+
+      // Detect role
+      const banner = document.getElementById('roleBanner');
+      const title = document.getElementById('roleTitle');
+      const desc = document.getElementById('roleDesc');
+      const pill = document.getElementById('rolePill');
+
+      const roleCookie = cookies.split('; ').find(row => row.startsWith('app_role='))?.split('=')[1];
+      const localRole = localDump['auth_role'];
+
+      const activeRole = roleCookie || localRole;
+
+      if (activeRole === 'admin') {
+        banner.className = 'role-banner role-admin';
+        title.innerHTML = '👑 Authenticated: Administrator (Superuser)';
+        desc.textContent = 'Full system privileges. JWT token active with admin scope.';
+        pill.textContent = 'ADMIN';
+      } else if (activeRole === 'vip') {
+        banner.className = 'role-banner role-vip';
+        title.innerHTML = '💎 Authenticated: VIP Paid Member';
+        desc.textContent = 'Premium subscriber privileges. Access to VIP lounge unlocked.';
+        pill.textContent = 'VIP MEMBER';
+      } else if (activeRole === 'regular') {
+        banner.className = 'role-banner role-user';
+        title.innerHTML = '👤 Authenticated: Regular User';
+        desc.textContent = 'Standard member account privileges. Active consumer session.';
+        pill.textContent = 'REGULAR';
+      } else {
+        banner.className = 'role-banner role-guest';
+        title.innerHTML = '👤 Logged Out (Guest State)';
+        desc.textContent = 'No active session tokens or authenticated user state detected.';
+        pill.textContent = 'GUEST';
+      }
+    }
+
+    // Role Login Handlers
+    document.getElementById('loginAdminBtn').addEventListener('click', () => {
+      setCookie('app_session', 'jwt_token_admin_super_secret_9999');
+      setCookie('app_role', 'admin');
+      localStorage.setItem('auth_role', 'admin');
+      localStorage.setItem('user_profile', JSON.stringify({ id: 1, name: 'Admin Root', email: 'admin@qaswitch.dev', role: 'admin' }));
+      sessionStorage.setItem('last_active_tab', 'admin_analytics');
+      inspectState();
+    });
+
+    document.getElementById('loginUserBtn').addEventListener('click', () => {
+      setCookie('app_session', 'jwt_token_regular_user_abc123');
+      setCookie('app_role', 'regular');
+      localStorage.setItem('auth_role', 'regular');
+      localStorage.setItem('user_profile', JSON.stringify({ id: 2, name: 'Jane Doe', email: 'jane@example.com', role: 'regular' }));
+      sessionStorage.setItem('last_active_tab', 'user_feed');
+      inspectState();
+    });
+
+    document.getElementById('loginVipBtn').addEventListener('click', () => {
+      setCookie('app_session', 'jwt_token_vip_subscriber_8888');
+      setCookie('app_role', 'vip');
+      localStorage.setItem('auth_role', 'vip');
+      localStorage.setItem('user_profile', JSON.stringify({ id: 3, name: 'VIP Alex', email: 'alex@vip.org', tier: 'Pro Enterprise' }));
+      sessionStorage.setItem('last_active_tab', 'vip_perks');
+      inspectState();
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      clearCookie('app_session');
+      clearCookie('app_role');
+      localStorage.clear();
+      sessionStorage.clear();
+      inspectState();
+    });
+
+    inspectState();
+  </script>
+</body>
+</html>
+

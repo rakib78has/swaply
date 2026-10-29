@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swaply</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body class="theme-dark">
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 3h5v5" />
+            <path d="M4 20L21 3" />
+            <path d="M21 16v5h-5" />
+            <path d="M15 15l6 6" />
+            <path d="M4 4l5 5" />
+          </svg>
+        </div>
+        <span class="brand-name">Swaply</span>
+        <span class="version-pill">v2.5</span>
+      </div>
+      <div class="header-actions">
+        <button class="tier-badge" id="tierBadge" title="Click to view Pro License Status">
+          <span class="tier-label" id="tierLabel">FREE</span>
+          <span class="tier-count" id="tierCount">0/2</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Domain Status Bar with Nuke/Reset Action -->
+    <div class="domain-bar">
+      <div class="domain-info">
+        <span class="status-indicator" id="statusDot"></span>
+        <span class="domain-text" id="domainText">Detecting domain...</span>
+      </div>
+      <button class="btn btn-nuke" id="nukeSessionBtn" title="Clean Slate: Clear all cookies and storage to simulate a logged-out guest state (Alt+Shift+X)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+          <line x1="12" y1="2" x2="12" y2="12" />
+        </svg>
+        <span>Reset</span>
+      </button>
+    </div>
+
+    <!-- Restricted Site Warning (Hidden by default) -->
+    <div class="alert-banner warning-banner hidden" id="restrictedNotice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <div>
+        <strong>Restricted Page</strong>
+        <p>Swaply cannot run on internal browser URLs (chrome://, webstore). Please navigate to a standard web page.</p>
+      </div>
+    </div>
+
+    <!-- Main Workspace (Active when domain is valid) -->
+    <div id="mainWorkspace">
+      <!-- Live 401/403 Heartbeat Expiry Banner -->
+      <div class="alert-banner hidden" id="heartbeatExpiredAlert" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; margin-bottom: 8px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 8px; font-size: 11px; color: #fca5a5;">
+        <span id="heartbeatAlertText">⚠️ Active session revoked or expired (HTTP 401/403)</span>
+        <button class="btn" id="dismissHeartbeatAlertBtn" style="padding: 2px 6px; font-size: 10px; background: transparent; border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; border-radius: 4px; cursor: pointer;">Dismiss</button>
+      </div>
+
+      <!-- Undo / Rollback Banner (Hidden by default) -->
+      <div class="alert-banner info-banner hidden" id="rollbackBanner" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; margin-bottom: 8px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 8px; font-size: 11px;">
+        <span id="rollbackBannerText">↺ Switched roles.</span>
+        <button class="btn" id="rollbackBtn" style="padding: 3px 8px; font-size: 11px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">Undo</button>
+      </div>
+
+      <!-- Freemium Banner (Shown when limit reached) -->
+      <div class="pro-banner hidden" id="proBanner">
+        <div class="pro-banner-content">
+          <div class="pro-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <div class="pro-text">
+            <span>Free tier limited to 2 profiles per domain. Upgrade to Pro for unlimited profiles and custom HTTP headers.</span>
+          </div>
+          <button class="btn btn-pro-action" id="upgradeBannerBtn">Upgrade</button>
+        </div>
+      </div>
+
+      <!-- Capture / Save Section -->
+      <!-- Capture / Save Section -->
+      <section class="section save-section">
+        <div class="section-header-row">
+          <label for="profileNameInput" class="section-label">SNAPSHOT CURRENT SESSION</label>
+          <button class="btn-subtle adv-toggle-btn" id="toggleAdvOptionsBtn" type="button">⚙️ Advanced Options ▾</button>
+        </div>
+        <div class="input-action-group">
+          <input 
+            type="text" 
+            id="profileNameInput" 
+            class="input-field" 
+            placeholder="Role Name (e.g. Admin, Paid Member, Buyer)..." 
+            maxlength="32" 
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button id="saveBtn" class="btn btn-primary" title="Snapshot cookies and storage">
+            <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            <span class="btn-text">Save</span>
+          </button>
+        </div>
+
+        <!-- Hidden legacy toggles kept for 100% JS compatibility -->
+        <div class="hidden">
+          <button id="toggleHeadersBtn"></button>
+          <button id="toggleMacroBtn"></button>
+          <button id="toggleTotpBtn"></button>
+        </div>
+
+        <!-- Sleek Collapsible Advanced Settings Drawer -->
+        <div id="advOptionsDrawer" class="adv-drawer hidden">
+          <div class="adv-grid-row">
+            <div class="adv-field-wrap">
+              <span class="adv-field-label">⏱️ Auto-Expiry</span>
+              <select id="profileTtlSelect" class="input-field select-field">
+                <option value="0">Never (Permanent)</option>
+                <option value="30">30 Minutes</option>
+                <option value="60">1 Hour</option>
+                <option value="1440">24 Hours</option>
+              </select>
+            </div>
+            <div class="adv-field-wrap">
+              <span class="adv-field-label">⚡ Simulated Network</span>
+              <select id="profileNetworkSelect" class="input-field select-field">
+                <option value="BROADBAND">Normal (Broadband)</option>
+                <option value="FAST_4G">Fast 4G</option>
+                <option value="SLOW_3G">Slow 3G</option>
+                <option value="HIGH_LATENCY">1s Satellite</option>
+                <option value="OFFLINE">Offline Mode</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="adv-grid-row">
+            <div class="adv-field-wrap">
+              <span class="adv-field-label">🌍 Geo-Location</span>
+              <select id="profileGeoSelect" class="input-field select-field">
+                <option value="">Default (Browser)</option>
+                <option value="us_ny">🇺🇸 US (New York)</option>
+                <option value="uk_london">🇬🇧 UK (London)</option>
+                <option value="jp_tokyo">🇯🇵 JP (Tokyo)</option>
+                <option value="de_frankfurt">🇩🇪 DE (Frankfurt)</option>
+                <option value="au_sydney">🇦🇺 AU (Sydney)</option>
+              </select>
+            </div>
+            <div class="adv-field-wrap">
+              <span class="adv-field-label">📱 Device Viewport</span>
+              <select id="profileDeviceSelect" class="input-field select-field">
+                <option value="">Default (Responsive)</option>
+                <option value="iphone_16_pro">📱 iPhone 16 Pro</option>
+                <option value="ipad_air">📲 iPad Air</option>
+                <option value="desktop_fhd">🖥️ Desktop HD</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="adv-grid-row">
+            <div class="adv-field-wrap">
+              <span class="adv-field-label">🔑 2FA Secret Key</span>
+              <div id="totpInputArea">
+                <input 
+                  type="text" 
+                  id="profileTotpSecretInput" 
+                  class="input-field" 
+                  placeholder="Base32 Key (JBSWY3DPEHPK3PXP)" 
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+            <div class="adv-field-wrap">
+              <span class="adv-field-label">🚀 Post-Switch Redirect</span>
+              <div id="macroInputArea">
+                <input 
+                  type="text" 
+                  id="macroAutoNavInput" 
+                  class="input-field" 
+                  placeholder="/dashboard or /checkout" 
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="adv-field-wrap" style="width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="adv-field-label">📋 Custom HTTP Headers (DNR)</span>
+              <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; font-size: 11px; color: var(--text-muted);">
+                <input type="checkbox" id="watermarkToggleCheckbox" checked />
+                <span>Show In-Page Role Banner</span>
+              </label>
+            </div>
+            <div id="headersInputArea">
+              <textarea 
+                id="customHeadersInput" 
+                class="input-field code-snippet" 
+                placeholder="Authorization: Bearer secret_token&#10;X-QA-Role: admin" 
+                rows="2"
+                spellcheck="false"
+                style="margin-top: 4px; width: 100%;"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QA Studio Quick Tools Hub -->
+      <section class="section studio-hub-section">
+        <div class="section-header-row" style="margin-bottom: 6px;">
+          <span class="section-label">🛠️ QA STUDIO TOOLS</span>
+        </div>
+        <div class="studio-tools-grid">
+          <button class="btn-studio" id="compareRolesBtn" title="Compare two roles side-by-side">
+            <span class="studio-icon">🔍</span>
+            <span class="studio-text">Diff</span>
+          </button>
+          <button class="btn-studio" id="auditSecurityBtn" title="OWASP Cookie & Session Security Audit">
+            <span class="studio-icon">🛡️</span>
+            <span class="studio-text">Audit</span>
+          </button>
+          <button class="btn-studio" id="dastBtn" title="DevSecOps DAST & Secret Leaks Scanner">
+            <span class="studio-icon">🔒</span>
+            <span class="studio-text">DAST</span>
+          </button>
+          <button class="btn-studio" id="totpBtn" title="2FA / TOTP Authenticator & Auto-Fill">
+            <span class="studio-icon">🔑</span>
+            <span class="studio-text">2FA</span>
+          </button>
+          <button class="btn-studio" id="flagsBtn" title="Feature Flags & A/B Experiment Overrides">
+            <span class="studio-icon">🚩</span>
+            <span class="studio-text">Flags</span>
+          </button>
+          <button class="btn-studio" id="chaosBtn" title="Chaos Engineering & Flaky Network Simulator">
+            <span class="studio-icon">🐒</span>
+            <span class="studio-text">Chaos</span>
+          </button>
+          <button class="btn-studio" id="personaBtn" title="AI Test Persona Synthesizer">
+            <span class="studio-icon">🤖</span>
+            <span class="studio-text">Persona</span>
+          </button>
+          <button class="btn-studio" id="webhookBtn" title="Team Webhook Broadcaster (Slack/Discord)">
+            <span class="studio-icon">📡</span>
+            <span class="studio-text">Webhook</span>
+          </button>
+          <button class="btn-studio" id="bugReportBtn" title="1-Click Jira/GitHub Bug Reporter">
+            <span class="studio-icon">🐞</span>
+            <span class="studio-text">Bug</span>
+          </button>
+          <button class="btn-studio" id="flightBtn" title="Blackbox Flight Recorder (60s Crash Log)">
+            <span class="studio-icon">🎙️</span>
+            <span class="studio-text">Flight</span>
+          </button>
+          <button class="btn-studio" id="graphqlBtn" title="GraphQL Operation Spy & Mocking Studio">
+            <span class="studio-icon">🕸️</span>
+            <span class="studio-text">GraphQL</span>
+          </button>
+          <button class="btn-studio" id="wsBtn" title="WebSocket & SSE Live Frame Inspector">
+            <span class="studio-icon">⚡</span>
+            <span class="studio-text">Sockets</span>
+          </button>
+          <button class="btn-studio" id="splitBtn" title="Multi-Role Split-Screen Dual Role Runner">
+            <span class="studio-icon">🪟</span>
+            <span class="studio-text">Split</span>
+          </button>
+          <button class="btn-studio" id="cssMediaBtn" title="CSS Media & a11y Preferences Spoofer">
+            <span class="studio-icon">🎨</span>
+            <span class="studio-text">Themes</span>
+          </button>
+          <button class="btn-studio" id="a11yBtn" title="WCAG 2.2 Visual a11y Overlay & Contrast Heatmap">
+            <span class="studio-icon">♿</span>
+            <span class="studio-text">a11y</span>
+          </button>
+          <button class="btn-studio" id="foldersBtn" title="Profile Folders, Tags & Collections Manager">
+            <span class="studio-icon">📁</span>
+            <span class="studio-text">Folders</span>
+          </button>
+          <button class="btn-studio" id="fakerBtn" title="AI Smart Form Filler & Realistic Seed Data">
+            <span class="studio-icon">🎭</span>
+            <span class="studio-text">Faker</span>
+          </button>
+          <button class="btn-studio" id="ghostBtn" title="Pixel-Perfect Figma Ghost Overlay">
+            <span class="studio-icon">👻</span>
+            <span class="studio-text">Ghost</span>
+          </button>
+          <button class="btn-studio" id="syncBtn" title="Real-Time Multi-Tab Action Synchronizer">
+            <span class="studio-icon">🔄</span>
+            <span class="studio-text">Sync</span>
+          </button>
+          <button class="btn-studio" id="vitalsBtn" title="Core Web Vitals & Performance Budget Profiler">
+            <span class="studio-icon">⚡</span>
+            <span class="studio-text">Vitals</span>
+          </button>
+          <button class="btn-studio" id="gatewayBtn" title="Dynamic URL & Gateway Rewrite Studio">
+            <span class="studio-icon">🔀</span>
+            <span class="studio-text">Gateway</span>
+          </button>
+          <button class="btn-studio" id="timeMachineBtn" title="DOM Storage & Cookie State Time Machine">
+            <span class="studio-icon">⏳</span>
+            <span class="studio-text">Time</span>
+          </button>
+          <button class="btn-studio" id="fuzzerBtn" title="In-Page XSS & Input Injection Fuzzer">
+            <span class="studio-icon">🛡️</span>
+            <span class="studio-text">Fuzzer</span>
+          </button>
+          <button class="btn-studio" id="pwaBtn" title="Service Worker & PWA Cache Inspector">
+            <span class="studio-icon">📦</span>
+            <span class="studio-text">PWA</span>
+          </button>
+          <button class="btn-studio" id="waterfallBtn" title="Network Waterfall & Asset Bottlenecks">
+            <span class="studio-icon">🌊</span>
+            <span class="studio-text">Waterfall</span>
+          </button>
+          <button class="btn-studio" id="matrixBtn" title="QA Test Matrix & Step Generator">
+            <span class="studio-icon">📑</span>
+            <span class="studio-text">Matrix</span>
+          </button>
+          <button class="btn-studio" id="crawlerBtn" title="Dead Links & Broken Asset Crawler">
+            <span class="studio-icon">🔍</span>
+            <span class="studio-text">Crawler</span>
+          </button>
+          <button class="btn-studio" id="visionBtn" title="Color Blindness & Low Acuity Simulator">
+            <span class="studio-icon">👁️</span>
+            <span class="studio-text">Vision</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Profiles List Section -->
+      <section class="section list-section">
+        <div class="section-header-row">
+          <div class="section-title-wrap">
+            <span class="section-label">SAVED PROFILES</span>
+            <span class="profile-stats" id="profileStatsText">0 profiles</span>
+          </div>
+          <div class="tool-actions-clean">
+            <button class="btn-tool" id="importJsonBtn" title="Import profiles from JSON">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Import</span>
+            </button>
+            <button class="btn-tool" id="exportAllJsonBtn" title="Export domain profiles to JSON">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+
+        <input type="file" id="importFileInput" accept=".json" class="hidden" />
+
+        <!-- Profile Collections & Tag Filter Bar -->
+        <div class="filter-bar" id="profileFilterBar">
+          <div class="filter-controls-row">
+            <select id="folderFilterSelect" class="input-field select-field-sm" style="flex: 1;">
+              <option value="ALL">📁 All Folders</option>
+            </select>
+          </div>
+          <div class="tag-pills-row" id="tagPillsContainer">
+            <button class="tag-pill active" data-tag="">#all</button>
+          </div>
+        </div>
+
+        <!-- Empty State Container -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <h4 class="empty-title">No sessions saved yet</h4>
+          <p class="empty-desc">Log into an account, name the role above, and click <strong>Save</strong> to bookmark this session state.</p>
+        </div>
+
+        <!-- Dynamic Profile List -->
+        <div class="profile-list" id="profileList"></div>
+      </section>
+    </div>
+
+    <!-- Role Diff / Comparison Modal -->
+    <div class="modal-backdrop hidden" id="diffModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🔍 Role Session Comparison</h3>
+          </div>
+          <button class="btn-close-modal" id="closeDiffModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Compare cookies and storage tokens between two saved roles.</p>
+        
+        <div class="diff-selectors">
+          <select id="diffRoleA" class="input-field select-field"></select>
+          <span style="font-weight: bold; color: var(--text-muted);">vs</span>
+          <select id="diffRoleB" class="input-field select-field"></select>
+        </div>
+
+        <div class="diff-results" id="diffResultsContainer">
+          <div class="diff-empty-notice">Select two roles above to see their security diff.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Encrypted Share Modal -->
+    <div class="modal-backdrop hidden" id="shareModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="pro-crown-icon">🔐</div>
+            <h3 class="modal-title">Encrypted Session Share</h3>
+          </div>
+          <button class="btn-close-modal" id="closeShareModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">
+          Export this session using <strong>AES-GCM 256-bit encryption</strong> with a passphrase so sensitive tokens are safe to share over Slack or Jira.
+        </p>
+        <div class="section">
+          <label class="section-label">SECRET PASSPHRASE</label>
+          <input type="password" id="sharePassphraseInput" class="input-field" placeholder="Enter a secure team passphrase..." />
+          <button class="btn btn-primary" id="generateEncryptedShareBtn">Generate Encrypted Snippet</button>
+        </div>
+        <div id="shareResultArea" class="hidden section">
+          <label class="section-label">ENCRYPTED SNIPPET (CLICK TO COPY)</label>
+          <textarea id="encryptedOutputSnippet" class="input-field code-snippet" readonly rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro License & Upgrade Modal -->
+    <div class="modal-backdrop hidden" id="proModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="pro-crown-icon">👑</div>
+            <h3 class="modal-title">Swaply Pro</h3>
+          </div>
+          <button class="btn-close-modal" id="closeModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">
+          Empower your QA workflow with unlimited domain profiles, custom HTTP header injection, and AES-GCM encrypted sharing.
+        </p>
+
+        <div class="pro-perks-list">
+          <div class="perk-item">✓ <strong>Unlimited</strong> profiles per domain</div>
+          <div class="perk-item">✓ <strong>Custom HTTP Header Injection</strong> (DNR)</div>
+          <div class="perk-item">✓ <strong>AES-GCM Encrypted Sharing</strong> for Slack/Jira</div>
+          <div class="perk-item">✓ <strong>Session Diff Inspector</strong> (Admin vs User)</div>
+        </div>
+
+        <div class="license-input-wrap">
+          <input 
+            type="text" 
+            id="licenseKeyInput" 
+            class="input-field" 
+            placeholder="Enter Pro License Key..." 
+            autocomplete="off"
+          />
+          <button class="btn btn-primary" id="activateLicenseBtn">Activate</button>
+        </div>
+        <div class="modal-footer-hint">
+          <span>Test Key: <code class="test-key-badge" id="demoKeyPill">QAPRO-DEV</code></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Automation Export Modal (Playwright, Postman, Cypress) -->
+    <div class="modal-backdrop hidden" id="testExportModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🧪 Export for Test Automation</h3>
+          </div>
+          <button class="btn-close-modal" id="closeTestExportModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc" id="testExportModalDesc">Export this session directly into test automation frameworks.</p>
+        
+        <div class="diff-selectors" style="margin-bottom: 8px;">
+          <button class="btn-tool active" id="tabExportPlaywright" style="flex: 1; justify-content: center;">Playwright</button>
+          <button class="btn-tool" id="tabExportPostman" style="flex: 1; justify-content: center;">Postman</button>
+          <button class="btn-tool" id="tabExportCypress" style="flex: 1; justify-content: center;">Cypress</button>
+        </div>
+
+        <div class="section">
+          <textarea id="testExportCodeArea" class="input-field code-snippet" readonly rows="7"></textarea>
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <button class="btn btn-primary" id="copyTestExportBtn" style="flex: 1;">📋 Copy</button>
+            <button class="btn btn-tool" id="downloadTestExportBtn" style="flex: 1; justify-content: center;">💾 Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OWASP Session Security Audit Modal -->
+    <div class="modal-backdrop hidden" id="securityModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🛡️ OWASP Security Audit</h3>
+          </div>
+          <button class="btn-close-modal" id="closeSecurityModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Automated vulnerability scan of active cookies and window.localStorage.</p>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px;">
+          <div>
+            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Security Grade</span>
+            <div id="securityGradeBadge" style="font-size: 24px; font-weight: 800; color: #10b981;">A+</div>
+          </div>
+          <div style="text-align: right;">
+            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Compliance Score</span>
+            <div id="securityScoreText" style="font-size: 18px; font-weight: 700;">100 / 100</div>
+          </div>
+        </div>
+
+        <div class="diff-results" id="securityFindingsContainer" style="max-height: 180px; overflow-y: auto; margin-bottom: 10px;"></div>
+
+        <button class="btn btn-primary" id="copySecurityReportBtn" style="width: 100%;">📋 Copy Full Markdown Audit Report</button>
+      </div>
+    </div>
+
+    <!-- 1-Click Jira / GitHub Bug Reporter Modal -->
+    <div class="modal-backdrop hidden" id="bugReportModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🐞 1-Click Jira / GitHub Bug Report</h3>
+          </div>
+          <button class="btn-close-modal" id="closeBugReportModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Assembles active role credentials, headers, and environment into an instant issue report.</p>
+        
+        <div class="section" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+          <input type="text" id="bugTitleInput" class="input-field" placeholder="Brief issue title (e.g. Button 500s on click)" />
+          <textarea id="bugDescriptionInput" class="input-field" rows="2" placeholder="Describe the bug / observed behavior..."></textarea>
+          <textarea id="bugMarkdownPreview" class="input-field code-snippet" readonly rows="6" style="margin-top: 4px;"></textarea>
+        </div>
+
+        <button class="btn btn-primary" id="copyBugReportBtn" style="width: 100%;">📋 Copy Formatted Issue to Clipboard</button>
+      </div>
+    </div>
+
+    <!-- AI Test Persona Synthesizer Modal -->
+    <div class="modal-backdrop hidden" id="personaModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🤖 AI Test Persona Synthesizer</h3>
+          </div>
+          <button class="btn-close-modal" id="closePersonaModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Instant 1-click synthetic test personas with pre-configured JWT claims, cookies, and headers.</p>
+        
+        <div class="diff-results" id="personaListContainer" style="max-height: 220px; overflow-y: auto; margin-bottom: 8px;"></div>
+      </div>
+    </div>
+
+    <!-- Team Webhook Broadcaster Modal -->
+    <div class="modal-backdrop hidden" id="webhookModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">📡 Team Webhook Broadcaster</h3>
+          </div>
+          <button class="btn-close-modal" id="closeWebhookModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Broadcast encrypted sessions and role switch events directly to team Slack or Discord channels.</p>
+        
+        <div class="section" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+          <label class="section-label">WEBHOOK PLATFORM</label>
+          <select id="webhookPlatformSelect" class="input-field select-field">
+            <option value="slack">Slack (Incoming Webhook / Block Kit)</option>
+            <option value="discord">Discord (Webhooks / Embed)</option>
+            <option value="generic">Generic JSON Webhook (CI/CD / Teams)</option>
+          </select>
+          <label class="section-label">WEBHOOK URL</label>
+          <input type="url" id="webhookUrlInput" class="input-field" placeholder="https://hooks.slack.com/services/... or Discord URL" />
+          <label class="section-label">SELECT ROLE TO BROADCAST</label>
+          <select id="webhookRoleSelect" class="input-field select-field"></select>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn btn-primary" id="sendWebhookBroadcastBtn" style="flex: 1;">🚀 Broadcast to Channel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2FA / TOTP Authenticator Modal -->
+    <div class="modal-backdrop hidden" id="totpModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🔑 2FA / TOTP Authenticator</h3>
+          </div>
+          <button class="btn-close-modal" id="closeTotpModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Generates live 6-digit Time-based OTPs with 1-click auto-fill for 2FA-protected roles.</p>
+        
+        <div style="text-align: center; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px;">
+          <div id="totpCodeDisplay" style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #6366f1; font-family: monospace;">------</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Expires in <span id="totpCountdownText" style="color: #f59e0b; font-weight: 700;">30</span>s</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="autofillTotpBtn" style="flex: 1;">⚡ Auto-Fill into Page</button>
+          <button class="btn btn-tool" id="copyTotpBtn" style="flex: 1; justify-content: center;">📋 Copy OTP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Flags & Experiment Override Modal -->
+    <div class="modal-backdrop hidden" id="flagsModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🚩 Feature Flags & Experiments</h3>
+          </div>
+          <button class="btn-close-modal" id="closeFlagsModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Override LaunchDarkly, Statsig, and frontend feature flags without redeployment.</p>
+        
+        <div class="section" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+          <label class="section-label">FLAG OVERRIDES (KEY=VALUE)</label>
+          <textarea id="flagsInputText" class="input-field code-snippet" rows="5" placeholder="newCheckoutFlow=true&#10;darkMode=true&#10;betaBanner=false&#10;discountRate=0.20" spellcheck="false"></textarea>
+        </div>
+
+        <button class="btn btn-primary" id="applyFlagsBtn" style="width: 100%;">⚡ Inject & Apply Overrides</button>
+      </div>
+    </div>
+
+    <!-- Chaos Engineering Modal -->
+    <div class="modal-backdrop hidden" id="chaosModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🐒 Chaos Engineering Simulator</h3>
+          </div>
+          <button class="btn-close-modal" id="closeChaosModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Simulate dropped packets, flaky APIs, and 500 status codes to test frontend resilience.</p>
+        
+        <div class="section" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
+          <label class="section-label">CHAOS FAULT MODE</label>
+          <select id="chaosModeSelect" class="input-field select-field">
+            <option value="DISABLED">Off (Normal Traffic)</option>
+            <option value="PACKET_LOSS">Packet Drop (Network Failure)</option>
+            <option value="RANDOM_500">Random 500 Internal Server Errors</option>
+            <option value="HIGH_JITTER">High Latency Jitter Spikes</option>
+          </select>
+          <label class="section-label">FAILURE RATE: <span id="chaosRateDisplay">20%</span></label>
+          <input type="range" id="chaosRateSlider" min="5" max="100" value="20" style="width: 100%; cursor: pointer;" />
+        </div>
+
+        <button class="btn btn-primary" id="applyChaosBtn" style="width: 100%;">⚡ Enable Chaos Fault Injection</button>
+      </div>
+    </div>
+
+    <!-- DevSecOps DAST Scanner Modal -->
+    <div class="modal-backdrop hidden" id="dastModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🛡️ DevSecOps DAST Scanner</h3>
+          </div>
+          <button class="btn-close-modal" id="closeDastModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Client-side audit for exposed API keys, CORS wildcard misconfigurations, and clickjacking.</p>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;">
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">DAST Security Score</span>
+          <div id="dastScoreBadge" style="font-size: 20px; font-weight: 800; color: #10b981;">100 / 100</div>
+        </div>
+
+        <div class="diff-results" id="dastFindingsContainer" style="max-height: 180px; overflow-y: auto; margin-bottom: 8px;"></div>
+        <button class="btn btn-primary" id="runDastScanBtn" style="width: 100%;">🔍 Re-Scan Active Page</button>
+      </div>
+    </div>
+
+    <!-- Blackbox Flight Recorder Modal -->
+    <div class="modal-backdrop hidden" id="flightModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🎙️ Blackbox Flight Recorder</h3>
+          </div>
+          <button class="btn-close-modal" id="closeFlightModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Circular buffer of the last 60 seconds of console errors, failed calls, and UI clicks.</p>
+        
+        <textarea id="flightLogArea" class="input-field code-snippet" readonly rows="8" style="margin-bottom: 8px;"></textarea>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="downloadFlightLogBtn" style="flex: 1;">💾 Download Crash Log</button>
+          <button class="btn btn-tool" id="copyFlightLogBtn" style="flex: 1; justify-content: center;">📋 Copy Log</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GraphQL Spy & Mock Studio Modal -->
+    <div class="modal-backdrop hidden" id="graphqlModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🕸️ GraphQL Spy & Mock Studio</h3>
+          </div>
+          <button class="btn-close-modal" id="closeGraphqlModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Match queries and mutations by operationName and return mock responses.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;">
+          <input type="text" id="gqlOpNameInput" class="input-field" placeholder="Operation Name (e.g. GetUser or *)" />
+          <div style="display: flex; gap: 6px;">
+            <select id="gqlOpTypeSelect" class="input-field select-field" style="flex: 1;">
+              <option value="any">Any Operation Type</option>
+              <option value="query">query</option>
+              <option value="mutation">mutation</option>
+              <option value="subscription">subscription</option>
+            </select>
+            <input type="number" id="gqlStatusCodeInput" class="input-field" value="200" placeholder="200" style="width: 70px;" />
+          </div>
+          <textarea id="gqlMockDataInput" class="input-field code-snippet" rows="3" placeholder='Mock Response { "user": { "id": "1", "role": "ADMIN" } }'></textarea>
+          <button class="btn btn-primary" id="addGqlRuleBtn">+ Add GraphQL Mock Rule</button>
+        </div>
+
+        <div class="section-label" style="margin-top: 6px; margin-bottom: 4px;">ACTIVE GRAPHQL RULES</div>
+        <div id="gqlRulesList" class="diff-results" style="max-height: 100px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">No mock rules active yet.</div>
+        </div>
+        <button class="btn btn-secondary" id="applyGqlRulesBtn" style="width: 100%;">⚡ Inject In-Page GraphQL Mocking</button>
+      </div>
+    </div>
+
+    <!-- WebSocket & SSE Live Inspector Modal -->
+    <div class="modal-backdrop hidden" id="wsModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">⚡ WebSocket & SSE Live Inspector</h3>
+          </div>
+          <button class="btn-close-modal" id="closeWsModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Monitor bi-directional frames in real-time and inject synthetic client frames.</p>
+
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+          <input type="text" id="wsFilterInput" class="input-field" placeholder="Filter frames by text or url..." style="flex: 1;" />
+          <button class="btn btn-tool" id="clearWsFramesBtn" title="Clear frames">🧹</button>
+        </div>
+
+        <div id="wsFramesContainer" class="diff-results" style="max-height: 140px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">No WebSocket/SSE frames captured yet. Hooking active tab...</div>
+        </div>
+
+        <div class="section-label" style="margin-bottom: 4px;">SYNTHETIC INJECTION (DOWN)</div>
+        <div style="display: flex; gap: 6px;">
+          <input type="text" id="wsInjectPayloadInput" class="input-field" placeholder='{"event":"order_placed","id":123}' style="flex: 1;" />
+          <button class="btn btn-primary" id="injectWsFrameBtn">Inject</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-Role Split-Screen Runner Modal -->
+    <div class="modal-backdrop hidden" id="splitModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🪟 Split-Screen Dual Role Runner</h3>
+          </div>
+          <button class="btn-close-modal" id="closeSplitModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Run two roles concurrently side-by-side with synchronized navigation.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1;">
+              <span class="adv-field-label">Left Pane (Role A)</span>
+              <select id="splitLeftRoleSelect" class="input-field select-field"></select>
+            </div>
+            <div style="flex: 1;">
+              <span class="adv-field-label">Right Pane (Role B)</span>
+              <select id="splitRightRoleSelect" class="input-field select-field"></select>
+            </div>
+          </div>
+
+          <div>
+            <span class="adv-field-label">Target URL</span>
+            <input type="text" id="splitTargetUrlInput" class="input-field" placeholder="https://example.com/admin" />
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: center; font-size: 11px;">
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="radio" name="splitOrientation" value="side-by-side" checked />
+              <span>↔️ Side-by-Side</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="radio" name="splitOrientation" value="stacked" />
+              <span>↕️ Stacked</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; margin-left: auto;">
+              <input type="checkbox" id="splitSyncScrollCheck" />
+              <span>Scroll Sync</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="launchSplitRunnerBtn" style="width: 100%;">🚀 Launch Dual Runner Window</button>
+      </div>
+    </div>
+
+    <!-- CSS Media & Preferences Spoofer Modal -->
+    <div class="modal-backdrop hidden" id="cssMediaModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🎨 CSS Media & a11y Preferences</h3>
+          </div>
+          <button class="btn-close-modal" id="closeCssMediaModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Simulate OS theme and accessibility media queries without changing system settings.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <div>
+            <span class="adv-field-label">prefers-color-scheme</span>
+            <select id="cssPrefColorScheme" class="input-field select-field">
+              <option value="system">🖥️ System Default</option>
+              <option value="dark">🌙 Dark Mode</option>
+              <option value="light">☀️ Light Mode</option>
+            </select>
+          </div>
+          <div>
+            <span class="adv-field-label">prefers-reduced-motion</span>
+            <select id="cssPrefReducedMotion" class="input-field select-field">
+              <option value="system">🖥️ System Default</option>
+              <option value="reduce">🛑 reduce (Disable Animations)</option>
+              <option value="no-preference">🏃 no-preference</option>
+            </select>
+          </div>
+          <div>
+            <span class="adv-field-label">prefers-contrast</span>
+            <select id="cssPrefContrast" class="input-field select-field">
+              <option value="system">🖥️ System Default</option>
+              <option value="more">🔆 more (High Contrast)</option>
+              <option value="less">🔅 less (Low Contrast)</option>
+              <option value="no-preference">no-preference</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="applyCssPrefsBtn" style="flex: 1;">⚡ Apply Preferences</button>
+          <button class="btn btn-secondary" id="resetCssPrefsBtn" style="flex: 1;">Reset to System</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WCAG 2.2 Visual a11y Overlay Modal -->
+    <div class="modal-backdrop hidden" id="a11yModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">♿ WCAG 2.2 Visual a11y Inspector</h3>
+          </div>
+          <button class="btn-close-modal" id="closeA11yModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Live in-page scan for contrast ratio (< 4.5:1), missing alt attributes, and unlabeled form inputs.</p>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px;">
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Visual Badges & Outline</span>
+          <span id="a11yStatusBadge" style="font-size: 12px; font-weight: 700; color: #38bdf8;">Ready to scan</span>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="runA11yScanBtn" style="flex: 1;">🔍 Run In-Page a11y Scan</button>
+          <button class="btn btn-secondary" id="clearA11yBadgesBtn" style="flex: 1;">🧹 Clear Overlay</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Folders & Tags Manager Modal -->
+    <div class="modal-backdrop hidden" id="foldersModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">📁 Workspace Collections & Tags</h3>
+          </div>
+          <button class="btn-close-modal" id="closeFoldersModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Organize role profiles into folders and manage workspace collections.</p>
+
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <input type="text" id="newFolderNameInput" class="input-field" placeholder="Folder Name (e.g. Sprint 42, Staging)..." style="flex: 1;" />
+          <button class="btn btn-primary" id="createFolderBtn">+ Add</button>
+        </div>
+
+        <div class="section-label" style="margin-bottom: 4px;">CURRENT FOLDERS</div>
+        <div id="foldersListContainer" class="diff-results" style="max-height: 150px; overflow-y: auto;">
+          <div class="diff-empty-notice">No custom folders created yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Smart Form Faker Modal -->
+    <div class="modal-backdrop hidden" id="fakerModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🎭 AI Smart Form Filler</h3>
+          </div>
+          <button class="btn-close-modal" id="closeFakerModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Auto-fills empty form fields with context-aware realistic mock data (Luhn credit cards, emails, phones, names).</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; cursor: pointer;">
+            <input type="checkbox" id="fakerOnlyEmptyCheck" checked />
+            <span>Only fill currently empty fields</span>
+          </label>
+        </div>
+
+        <button class="btn btn-primary" id="runFakerBtn" style="width: 100%;">⚡ Auto-Fill Active Page Form</button>
+      </div>
+    </div>
+
+    <!-- Pixel-Perfect Ghost Overlay Modal -->
+    <div class="modal-backdrop hidden" id="ghostModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">👻 Pixel-Perfect Ghost Mode</h3>
+          </div>
+          <button class="btn-close-modal" id="closeGhostModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Overlay design mocks / Figma exports directly over live DOM to detect 1px misalignment.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+          <input type="text" id="ghostImageUrlInput" class="input-field" placeholder="Image URL (or paste data URI)" />
+          
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <span class="adv-field-label" style="width: 70px;">Opacity:</span>
+            <input type="range" id="ghostOpacitySlider" min="10" max="100" value="50" style="flex: 1;" />
+            <span id="ghostOpacityVal" style="font-size: 11px; width: 35px;">50%</span>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <select id="ghostBlendModeSelect" class="input-field select-field" style="flex: 1;">
+              <option value="normal">Normal (Opacity Overlay)</option>
+              <option value="difference">Difference (Pixel Diff Glow)</option>
+              <option value="overlay">Overlay</option>
+              <option value="multiply">Multiply</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="applyGhostBtn" style="flex: 1;">👻 Apply Ghost Layer</button>
+          <button class="btn btn-secondary" id="clearGhostBtn" style="flex: 1;">Dismiss</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-Tab Action Synchronizer Modal -->
+    <div class="modal-backdrop hidden" id="syncModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🔄 Multi-Tab Action Synchronizer</h3>
+          </div>
+          <button class="btn-close-modal" id="closeSyncModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Mirror scroll positions and live form inputs across tabs in real-time via BroadcastChannel.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <div>
+            <span class="adv-field-label">Channel Room Name</span>
+            <input type="text" id="syncChannelInput" class="input-field" value="qa_collab_room" />
+          </div>
+
+          <div style="display: flex; gap: 12px; font-size: 11px;">
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="syncScrollCheck" checked />
+              <span>Sync Scrolling</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="syncInputsCheck" checked />
+              <span>Sync Inputs</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="attachSyncBtn" style="flex: 1;">🔗 Attach to Channel</button>
+          <button class="btn btn-secondary" id="detachSyncBtn" style="flex: 1;">Detach</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core Web Vitals Profiler Modal -->
+    <div class="modal-backdrop hidden" id="vitalsModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">⚡ Core Web Vitals Profiler</h3>
+          </div>
+          <button class="btn-close-modal" id="closeVitalsModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Measure LCP, TTFB, FCP, and JS Heap size across different roles.</p>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;">
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Performance Budget</span>
+          <div id="vitalsScoreBadge" style="font-size: 20px; font-weight: 800; color: #10b981;">100 / 100</div>
+        </div>
+
+        <div id="vitalsMetricsContainer" class="diff-results" style="max-height: 150px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Click Profile to measure active page performance.</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="runVitalsBtn" style="flex: 1;">⚡ Profile Web Vitals</button>
+          <button class="btn btn-tool" id="copyVitalsBtn" style="flex: 1; justify-content: center;">📋 Copy Markdown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Gateway URL Rewrite Modal -->
+    <div class="modal-backdrop hidden" id="gatewayModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🔀 Gateway URL Rewrite Studio</h3>
+          </div>
+          <button class="btn-close-modal" id="closeGatewayModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Reroute remote staging APIs to localhost microservices without proxy tools.</p>
+
+        <textarea id="gatewayRulesArea" class="input-field code-snippet" rows="5" placeholder="^https://api\\.staging\\.com/v1/(.*) -> http://localhost:8080/v1/$1"></textarea>
+
+        <button class="btn btn-primary" id="applyGatewayBtn" style="width: 100%; margin-top: 8px;">⚡ Apply Declarative URL Rewrites</button>
+      </div>
+    </div>
+
+    <!-- DOM Storage Time Machine Modal -->
+    <div class="modal-backdrop hidden" id="timeMachineModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">⏳ DOM Storage Time Machine</h3>
+          </div>
+          <button class="btn-close-modal" id="closeTimeMachineModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Changelog of storage mutations. Inspect state drift or rollback to any point in time.</p>
+
+        <div id="timeMachineChangelog" class="diff-results" style="max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Listening for storage mutations in active tab...</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="refreshTimeMachineBtn" style="flex: 1;">↻ Refresh Changelog</button>
+          <button class="btn btn-secondary" id="clearTimeMachineBtn" style="flex: 1;">🧹 Clear Log</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- In-Page XSS & Input Injection Fuzzer Modal -->
+    <div class="modal-backdrop hidden" id="fuzzerModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🛡️ In-Page XSS & Injection Fuzzer</h3>
+          </div>
+          <button class="btn-close-modal" id="closeFuzzerModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Fuzz active page form inputs with OWASP polyglots & trap DOM sinks (innerHTML, reflection).</p>
+
+        <div id="fuzzerResults" class="diff-results" style="max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Click 'Fuzz Page Inputs' to scan DOM for reflection & injection vulnerabilities.</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="runFuzzerBtn" style="flex: 1;">⚡ Fuzz Page Inputs</button>
+          <button class="btn btn-tool" id="copyFuzzerBtn" style="flex: 1; justify-content: center;">📋 Copy Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Worker & PWA Cache Inspector Modal -->
+    <div class="modal-backdrop hidden" id="pwaModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">📦 Service Worker & PWA Cache Inspector</h3>
+          </div>
+          <button class="btn-close-modal" id="closePwaModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Inspect registered Service Workers, check CacheStorage buckets, and 1-click purge.</p>
+
+        <div id="pwaResults" class="diff-results" style="max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Click 'Inspect PWA' to view service workers and cache buckets.</div>
+        </div>
+
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-primary" id="inspectPwaBtn" style="flex: 1.2;">↻ Inspect PWA</button>
+          <button class="btn btn-secondary" id="purgePwaCachesBtn" style="flex: 1;">🧹 Purge Caches</button>
+          <button class="btn btn-secondary" id="unregPwaWorkerBtn" style="flex: 1;">Unregister</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Network Waterfall & Asset Heatmap Modal -->
+    <div class="modal-backdrop hidden" id="waterfallModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🌊 Network Waterfall & Asset Heatmap</h3>
+          </div>
+          <button class="btn-close-modal" id="closeWaterfallModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Identify heavy uncompressed images (>1MB), large JS bundles (>500KB), and slow TTFB.</p>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;">
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Optimization Score</span>
+          <div id="waterfallScoreBadge" style="font-size: 20px; font-weight: 800; color: #10b981;">100 / 100</div>
+        </div>
+
+        <div id="waterfallResults" class="diff-results" style="max-height: 150px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Click 'Analyze Waterfall' to profile network resources.</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="runWaterfallBtn" style="flex: 1;">⚡ Analyze Waterfall</button>
+          <button class="btn btn-tool" id="copyWaterfallBtn" style="flex: 1; justify-content: center;">📋 Copy Markdown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Automated QA Test Matrix Generator Modal -->
+    <div class="modal-backdrop hidden" id="matrixModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">📑 Automated QA Test Matrix Generator</h3>
+          </div>
+          <button class="btn-close-modal" id="closeMatrixModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Generate structured QA execution matrices (Markdown / CSV) from saved profiles & RBAC levels.</p>
+
+        <div id="matrixResults" class="diff-results" style="max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Click 'Generate Matrix' to construct test cases from active domain profiles.</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="generateMatrixBtn" style="flex: 1.2;">⚡ Generate Matrix</button>
+          <button class="btn btn-tool" id="copyMatrixMdBtn" style="flex: 1; justify-content: center;">📋 Copy MD</button>
+          <button class="btn btn-secondary" id="downloadMatrixCsvBtn" style="flex: 1;">📥 CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dead Links & Broken Asset Crawler Modal -->
+    <div class="modal-backdrop hidden" id="crawlerModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">🔍 Dead Links & Broken Asset Crawler</h3>
+          </div>
+          <button class="btn-close-modal" id="closeCrawlerModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Scan in-page DOM for broken images (naturalWidth 0), scripts, stylesheets, and HTTP mixed content.</p>
+
+        <div id="crawlerResults" class="diff-results" style="max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
+          <div class="diff-empty-notice">Click 'Crawl Assets' to scan page DOM elements.</div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="runCrawlerBtn" style="flex: 1;">⚡ Crawl Assets</button>
+          <button class="btn btn-tool" id="copyCrawlerBtn" style="flex: 1; justify-content: center;">📋 Copy Markdown</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vision Deficiency & Color Blindness Simulator Modal -->
+    <div class="modal-backdrop hidden" id="visionModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <h3 class="modal-title">👁️ Vision Deficiency & Color Blindness</h3>
+          </div>
+          <button class="btn-close-modal" id="closeVisionModalBtn">&times;</button>
+        </div>
+        <p class="modal-desc">Simulate color vision deficiencies and low visual acuity with SVG matrices.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+          <div>
+            <span class="adv-field-label">Deficiency Type</span>
+            <select id="visionSelect" class="input-field select-field">
+              <option value="normal">Normal Vision (No Filter)</option>
+              <option value="protanopia">Protanopia (Red-Blind)</option>
+              <option value="deuteranopia">Deuteranopia (Green-Blind)</option>
+              <option value="tritanopia">Tritanopia (Blue-Blind)</option>
+              <option value="achromatopsia">Achromatopsia (Monochrome)</option>
+              <option value="blurred">Low Visual Acuity (Blur)</option>
+            </select>
+          </div>
+
+          <div id="visionDescBox" style="font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px;">
+            Normal Vision: Full standard RGB spectrum.
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="applyVisionBtn" style="flex: 1;">👁️ Apply Simulation</button>
+          <button class="btn btn-secondary" id="resetVisionBtn" style="flex: 1;">Reset Normal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-container hidden" id="toast">
+      <span class="toast-message" id="toastMessage"></span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

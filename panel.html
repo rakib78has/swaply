@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swaply DevTools Panel</title>
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body class="theme-devtools">
+  <div class="panel-layout">
+    <!-- Left Sidebar: Domain & Saved Roles -->
+    <aside class="panel-sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="brand-title">Swaply DevTools</span>
+        </div>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn btn-sm" id="panelUndoBtn" title="Undo last role switch" style="display:none;background:#3b82f6;color:white;border:none;border-radius:4px;padding:3px 6px;font-size:11px;cursor:pointer;">↺ Undo</button>
+          <button class="btn btn-sm btn-nuke" id="panelNukeBtn" title="Clean Slate (Reset to Guest)">Reset</button>
+        </div>
+      </div>
+
+      <div class="domain-pill-wrap">
+        <span class="status-dot online"></span>
+        <span class="domain-name" id="inspectedDomain">Detecting...</span>
+      </div>
+
+      <div class="sidebar-section-title">SAVED ROLES</div>
+      <div class="roles-list" id="panelRoleList">
+        <div class="empty-hint">No roles saved for this domain.</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area: Deep Inspection -->
+    <main class="panel-main">
+      <header class="main-header">
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="jwt">JWT Inspector</button>
+          <button class="nav-tab" data-tab="headers">HTTP Headers</button>
+          <button class="nav-tab" data-tab="curl">cURL Generator</button>
+          <button class="nav-tab" data-tab="storage">Live Storage</button>
+          <button class="nav-tab" data-tab="testexport">🧪 Playwright State</button>
+          <button class="nav-tab" data-tab="security">🛡️ Security Audit</button>
+          <button class="nav-tab" data-tab="webhook">📡 Webhook Hub</button>
+          <button class="nav-tab" data-tab="flags">🚩 Feature Flags</button>
+          <button class="nav-tab" data-tab="flight">🎙️ Flight Recorder</button>
+          <button class="nav-tab" data-tab="dast">🛡️ DAST Scanner</button>
+          <button class="nav-tab" data-tab="graphql">🕸️ GraphQL</button>
+          <button class="nav-tab" data-tab="ws">⚡ Sockets</button>
+          <button class="nav-tab" data-tab="vitals">⚡ Vitals</button>
+          <button class="nav-tab" data-tab="timemachine">⏳ Time Machine</button>
+          <button class="nav-tab" data-tab="waterfall">🌊 Waterfall</button>
+          <button class="nav-tab" data-tab="matrix">📑 QA Matrix</button>
+        </nav>
+        <button class="btn btn-sm btn-refresh" id="panelRefreshBtn">↻ Refresh</button>
+      </header>
+
+      <!-- Tab 1: JWT Inspector -->
+      <section class="tab-pane active" id="tab-jwt">
+        <div class="pane-header">
+          <span class="pane-title">Detected JSON Web Tokens in Session</span>
+          <span class="pane-desc">Scans cookies and localStorage for active authorization tokens.</span>
+        </div>
+        <div class="jwt-list" id="jwtListContainer">
+          <div class="empty-hint">No JWT tokens detected in current session.</div>
+        </div>
+      </section>
+
+      <!-- Tab 2: HTTP Headers (DNR) -->
+      <section class="tab-pane" id="tab-headers">
+        <div class="pane-header">
+          <span class="pane-title">Active Injected HTTP Request Headers (DNR)</span>
+          <span class="pane-desc">Headers injected into all outbound requests by the active role via Declarative Net Request.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="activeHeadersOutput" readonly rows="6"></textarea>
+        </div>
+      </section>
+
+      <!-- Tab 3: cURL Generator -->
+      <section class="tab-pane" id="tab-curl">
+        <div class="pane-header">
+          <span class="pane-title">Authenticated cURL Command</span>
+          <span class="pane-desc">Run this request in your terminal with active session cookies pre-attached.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="curlOutput" readonly rows="8"></textarea>
+          <button class="btn btn-primary" id="copyCurlBtn">📋 Copy cURL to Clipboard</button>
+        </div>
+      </section>
+
+      <!-- Tab 4: Live Storage -->
+      <section class="tab-pane" id="tab-storage">
+        <div class="pane-header">
+          <span class="pane-title">Raw Cookies & DOM Storage</span>
+        </div>
+        <div class="raw-storage-view">
+          <strong>Active Cookies:</strong>
+          <pre class="raw-dump" id="rawCookiesDump"></pre>
+          <strong style="margin-top: 12px; display: block;">Active LocalStorage:</strong>
+          <pre class="raw-dump" id="rawStorageDump"></pre>
+        </div>
+      </section>
+
+      <!-- Tab 5: Test Suite State Exporter -->
+      <section class="tab-pane" id="tab-testexport">
+        <div class="pane-header">
+          <span class="pane-title">Playwright storageState.json Generator</span>
+          <span class="pane-desc">Ready-to-use authentication state fixture for Playwright E2E tests.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="playwrightStateOutput" readonly rows="8"></textarea>
+          <button class="btn btn-primary" id="copyPlaywrightStateBtn">📋 Copy Playwright storageState</button>
+        </div>
+      </section>
+
+      <!-- Tab 6: OWASP Security Audit -->
+      <section class="tab-pane" id="tab-security">
+        <div class="pane-header">
+          <span class="pane-title">OWASP Cookie & Session Security Audit</span>
+          <span class="pane-desc">Automated vulnerability check against active cookies and storage keys.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelSecurityReportOutput" readonly rows="8"></textarea>
+          <button class="btn btn-primary" id="copyPanelSecurityReportBtn">📋 Copy Security Report</button>
+        </div>
+      </section>
+
+      <!-- Tab 7: Team Webhook Hub -->
+      <section class="tab-pane" id="tab-webhook">
+        <div class="pane-header">
+          <span class="pane-title">Team Webhook Broadcaster (Slack & Discord)</span>
+          <span class="pane-desc">Broadcast the active role snapshot or encrypted session to team channels.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelWebhookPayloadPreview" readonly rows="7"></textarea>
+          <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <input type="url" id="panelWebhookUrl" class="curl-code-area" style="flex: 2; height: 34px; padding: 6px 10px; font-size: 11px;" placeholder="https://hooks.slack.com/services/... or Discord Webhook" />
+            <button class="btn btn-primary" id="panelSendWebhookBtn" style="flex: 1;">🚀 Broadcast Now</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 8: Feature Flags -->
+      <section class="tab-pane" id="tab-flags">
+        <div class="pane-header">
+          <span class="pane-title">Feature Flags & A/B Variants</span>
+          <span class="pane-desc">Client-side overrides for LaunchDarkly, Statsig, and custom frontend flags.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelFlagsInput" rows="7" placeholder="newCheckoutFlow=true&#10;darkMode=true"></textarea>
+          <button class="btn btn-primary" id="panelApplyFlagsBtn" style="margin-top: 8px;">⚡ Inject Overrides into Page</button>
+        </div>
+      </section>
+
+      <!-- Tab 9: Blackbox Flight Recorder -->
+      <section class="tab-pane" id="tab-flight">
+        <div class="pane-header">
+          <span class="pane-title">Blackbox Flight Recorder Logs</span>
+          <span class="pane-desc">Circular buffer of the last 60 seconds of page events, network errors, and clicks.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelFlightLogOutput" readonly rows="8"></textarea>
+          <button class="btn btn-primary" id="panelCopyFlightBtn" style="margin-top: 8px;">📋 Copy Flight Log</button>
+        </div>
+      </section>
+
+      <!-- Tab 10: DevSecOps DAST Scanner -->
+      <section class="tab-pane" id="tab-dast">
+        <div class="pane-header">
+          <span class="pane-title">DevSecOps DAST & Secret Leaks Scanner</span>
+          <span class="pane-desc">Inspects client-side DOM & scripts for exposed API secrets, clickjacking, and CORS.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelDastReportOutput" readonly rows="8"></textarea>
+          <button class="btn btn-primary" id="panelRunDastBtn" style="margin-top: 8px;">🔍 Run DAST Scan</button>
+        </div>
+      </section>
+
+      <!-- Tab 11: GraphQL Spy -->
+      <section class="tab-pane" id="tab-graphql">
+        <div class="pane-header">
+          <span class="pane-title">GraphQL Operation Spy & Mock Logs</span>
+          <span class="pane-desc">Intercepted GraphQL operations and active mock rules.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelGraphqlOutput" readonly rows="8" placeholder="No GraphQL operations intercepted yet."></textarea>
+          <button class="btn btn-primary" id="panelRefreshGraphqlBtn" style="margin-top: 8px;">↻ Inspect Active Tab GraphQL</button>
+        </div>
+      </section>
+
+      <!-- Tab 12: WebSocket Live -->
+      <section class="tab-pane" id="tab-ws">
+        <div class="pane-header">
+          <span class="pane-title">WebSocket & SSE Live Frames</span>
+          <span class="pane-desc">Bi-directional socket frames captured from inspected tab.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelWsOutput" readonly rows="8" placeholder="No WebSocket/SSE frames captured yet."></textarea>
+          <button class="btn btn-primary" id="panelRefreshWsBtn" style="margin-top: 8px;">↻ Read Captured Frames</button>
+        </div>
+      </section>
+
+      <!-- Tab 13: Core Web Vitals -->
+      <section class="tab-pane" id="tab-vitals">
+        <div class="pane-header">
+          <span class="pane-title">Core Web Vitals & Performance Budget</span>
+          <span class="pane-desc">Measure LCP, TTFB, and JS Heap size in inspected tab.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelVitalsOutput" readonly rows="8" placeholder="Click Measure below to profile Core Web Vitals."></textarea>
+          <button class="btn btn-primary" id="panelRunVitalsBtn" style="margin-top: 8px;">⚡ Measure Web Vitals</button>
+        </div>
+      </section>
+
+      <!-- Tab 14: Storage Time Machine -->
+      <section class="tab-pane" id="tab-timemachine">
+        <div class="pane-header">
+          <span class="pane-title">DOM Storage Mutation Time Machine</span>
+          <span class="pane-desc">Real-time log of localStorage & sessionStorage changes.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelTimeMachineOutput" readonly rows="8" placeholder="No storage changes recorded yet."></textarea>
+          <button class="btn btn-primary" id="panelRefreshTimeMachineBtn" style="margin-top: 8px;">↻ Read Storage Changelog</button>
+        </div>
+      </section>
+
+      <!-- Tab 15: Network Waterfall Profiler -->
+      <section class="tab-pane" id="tab-waterfall">
+        <div class="pane-header">
+          <span class="pane-title">Network Waterfall & Heavy Asset Heatmap</span>
+          <span class="pane-desc">Identify latency bottlenecks, uncompressed images, and oversized scripts.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelWaterfallOutput" readonly rows="8" placeholder="Click Profile Waterfall below to inspect resources."></textarea>
+          <button class="btn btn-primary" id="panelRunWaterfallBtn" style="margin-top: 8px;">🌊 Profile Waterfall</button>
+        </div>
+      </section>
+
+      <!-- Tab 16: QA Test Matrix -->
+      <section class="tab-pane" id="tab-matrix">
+        <div class="pane-header">
+          <span class="pane-title">Automated QA Test Matrix Generator</span>
+          <span class="pane-desc">Structured test case matrix derived from domain roles and RBAC privileges.</span>
+        </div>
+        <div class="curl-box-wrap">
+          <textarea class="curl-code-area" id="panelMatrixOutput" readonly rows="8" placeholder="Click Generate Matrix below to construct execution suite."></textarea>
+          <button class="btn btn-primary" id="panelGenerateMatrixBtn" style="margin-top: 8px;">📑 Generate Matrix Suite</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+</html>

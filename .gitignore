@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Builds & Zips
+*.zip
+dist/
+build/
+staging/
+
+# Testing & Coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local

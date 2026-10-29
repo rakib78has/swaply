@@ -1,0 +1,359 @@
+/* ==========================================================================
+   QASwitch Chrome DevTools Panel Styling
+   ========================================================================== */
+
+:root {
+  --devtools-bg: #202124;
+  --devtools-sidebar: #28292c;
+  --devtools-border: #3c4043;
+  --devtools-hover: #35363a;
+  --devtools-active: #4285f4;
+  --text-main: #e8eaed;
+  --text-muted: #9aa0a6;
+  --accent-emerald: #81c995;
+  --accent-rose: #f28b82;
+  --accent-amber: #fdd663;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
+body.theme-devtools {
+  background-color: var(--devtools-bg);
+  color: var(--text-main);
+  font-size: 12px;
+  line-height: 1.4;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+.panel-layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.panel-sidebar {
+  width: 260px;
+  background-color: var(--devtools-sidebar);
+  border-right: 1px solid var(--devtools-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--devtools-border);
+}
+
+.brand-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.domain-pill-wrap {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--devtools-border);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-emerald);
+}
+
+.domain-name {
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-section-title {
+  padding: 10px 12px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.roles-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role-item {
+  background: var(--devtools-bg);
+  border: 1px solid var(--devtools-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+}
+
+.role-item:hover {
+  background: var(--devtools-hover);
+  border-color: #5f6368;
+}
+
+.role-item.active {
+  border-color: var(--accent-emerald);
+  background: rgba(129, 201, 149, 0.08);
+}
+
+.role-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.role-name {
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-sub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+/* Main Area */
+.panel-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--devtools-bg);
+  overflow: hidden;
+}
+
+.main-header {
+  height: 38px;
+  border-bottom: 1px solid var(--devtools-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+
+.nav-tabs {
+  display: flex;
+  height: 100%;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.nav-tab:hover {
+  color: var(--text-main);
+}
+
+.nav-tab.active {
+  color: #ffffff;
+  border-bottom-color: var(--devtools-active);
+}
+
+.tab-pane {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: none;
+}
+
+.tab-pane.active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pane-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pane-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.pane-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Buttons */
+.btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  font-weight: 600;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn-primary {
+  background: var(--devtools-active);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-nuke {
+  background: rgba(242, 139, 130, 0.15);
+  color: var(--accent-rose);
+  border: 1px solid rgba(242, 139, 130, 0.3);
+}
+
+.btn-nuke:hover {
+  background: var(--accent-rose);
+  color: #ffffff;
+}
+
+.btn-refresh {
+  background: transparent;
+  border: 1px solid var(--devtools-border);
+  color: var(--text-muted);
+}
+
+.btn-refresh:hover {
+  color: var(--text-main);
+  background: var(--devtools-hover);
+}
+
+.btn-switch {
+  background: rgba(129, 201, 149, 0.15);
+  color: var(--accent-emerald);
+  border: 1px solid rgba(129, 201, 149, 0.3);
+}
+
+.btn-switch:hover {
+  background: var(--accent-emerald);
+  color: #202124;
+}
+
+/* JWT Card */
+.jwt-card {
+  background: var(--devtools-sidebar);
+  border: 1px solid var(--devtools-border);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jwt-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.jwt-source-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(66, 133, 244, 0.15);
+  color: #8ab4f8;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.jwt-expiry-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.jwt-expiry-badge.valid { color: var(--accent-emerald); }
+.jwt-expiry-badge.expired { color: var(--accent-rose); }
+
+.jwt-code-block {
+  background: #18191c;
+  border: 1px solid var(--devtools-border);
+  border-radius: 4px;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 11px;
+  overflow-x: auto;
+  color: #8ab4f8;
+}
+
+/* cURL View */
+.curl-box-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.curl-code-area {
+  background: #18191c;
+  border: 1px solid var(--devtools-border);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 11.5px;
+  color: #e8eaed;
+  resize: none;
+}
+
+.raw-storage-view {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.raw-dump {
+  background: #18191c;
+  border: 1px solid var(--devtools-border);
+  border-radius: 4px;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 11px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.empty-hint {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  padding: 16px 0;
+  text-align: center;
+}
+

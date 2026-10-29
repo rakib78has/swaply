@@ -1,0 +1,43 @@
+{
+  "name": "swaply",
+  "version": "2.5.0",
+  "description": "Swaply - Chrome Extension (Manifest V3) for seamless QA role and session switching",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test-runner.ts",
+    "test:headed": "node test-headed.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:vitest": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "package": "node package-extension.js"
+  },
+  "keywords": [
+    "chrome-extension",
+    "manifest-v3",
+    "qa",
+    "session-switcher",
+    "cookies",
+    "typescript",
+    "vitest",
+    "playwright",
+    "headed-testing",
+    "devtools",
+    "jwt",
+    "curl",
+    "declarative-net-request",
+    "http-headers"
+  ],
+  "author": "Swaply Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/chrome": "^0.0.304",
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

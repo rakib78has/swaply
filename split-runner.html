@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QASwitch Split-Screen Dual Role Runner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #090d16;
+      color: #f8fafc;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      background: #111827;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1f2937;
+      gap: 16px;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #38bdf8;
+      letter-spacing: -0.02em;
+    }
+    .brand span.badge {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      max-width: 720px;
+    }
+    .url-input {
+      flex: 1;
+      background: #0b0f19;
+      border: 1px solid #374151;
+      color: #f8fafc;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    .url-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .btn {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+    .btn-secondary:hover { background: #374151; }
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+    .split-container {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1f2937;
+      overflow: hidden;
+      position: relative;
+    }
+    .pane:last-child {
+      border-right: none;
+    }
+    .pane-header {
+      background: #161e2e;
+      padding: 8px 14px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1f2937;
+    }
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-left { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .badge-right { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+    .pane-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pane-actions button {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .pane-actions button:hover { background: #1f2937; color: #f8fafc; }
+    iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>⚡ QASwitch</span>
+      <span class="badge">Dual Runner</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="commonUrl" class="url-input" placeholder="https://example.com" />
+      <button id="btnNavigate" class="btn">🚀 Navigate Both</button>
+      <button id="btnReload" class="btn btn-secondary">🔄 Reload All</button>
+      <button id="btnToggleOrientation" class="btn btn-secondary">↔️ Side-by-Side</button>
+      <button id="btnToggleSync" class="btn btn-secondary">🔗 Scroll Sync: OFF</button>
+    </div>
+  </header>
+  <main class="split-container" id="splitContainer">
+    <section class="pane" id="paneLeft">
+      <div class="pane-header">
+        <span class="role-badge badge-left" id="badgeLeft">Role A: Loading...</span>
+        <div class="pane-actions">
+          <button id="btnReloadLeft" title="Reload Left Pane">🔄 Reload</button>
+        </div>
+      </div>
+      <iframe id="frameLeft" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+    </section>
+    <section class="pane" id="paneRight">
+      <div class="pane-header">
+        <span class="role-badge badge-right" id="badgeRight">Role B: Loading...</span>
+        <div class="pane-actions">
+          <button id="btnReloadRight" title="Reload Right Pane">🔄 Reload</button>
+        </div>
+      </div>
+      <iframe id="frameRight" sandbox="allow-same-origin allow-scripts allow-forms allow-popups"></iframe>
+    </section>
+  </main>
+  <script src="split-runner.js"></script>
+</body>
+</html>

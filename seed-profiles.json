@@ -1,0 +1,213 @@
+{
+  "version": "2.5.0",
+  "exportedAt": 1793138000000,
+  "profiles": [
+    {
+      "name": "Super Admin",
+      "folder": "Sprint 42",
+      "tags": ["#admin", "#auth", "#critical"],
+      "cookies": [
+        {
+          "name": "auth_session",
+          "value": "s_adm_9941a87b3e210fa",
+          "domain": "localhost",
+          "path": "/",
+          "secure": true,
+          "httpOnly": true,
+          "sameSite": "lax"
+        },
+        {
+          "name": "user_role",
+          "value": "super_admin",
+          "domain": "localhost",
+          "path": "/",
+          "secure": true,
+          "httpOnly": false,
+          "sameSite": "lax"
+        }
+      ],
+      "storage": {
+        "local": {
+          "user_id": "usr_admin_001",
+          "user_email": "admin@enterprise.io",
+          "user_role": "SUPER_ADMIN",
+          "permissions": "[\"users:read\",\"users:write\",\"billing:admin\",\"settings:manage\"]",
+          "theme": "dark",
+          "feature_flags": "{\"newCheckoutFlow\":true,\"betaDashboard\":true,\"debugLogs\":true}"
+        },
+        "session": {
+          "active_tab": "users"
+        }
+      },
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbl8wMDEiLCJyb2xlIjoiYWRtaW4iLCJpc3MiOiJxYXN3aXRjaCJ9.mock_sig",
+        "X-QA-Role": "admin",
+        "X-Tenant-ID": "enterprise-master"
+      },
+      "totpSecret": "JBSWY3DPEHPK3PXP",
+      "macro": {
+        "autoNavigateUrl": "/admin/dashboard"
+      },
+      "networkProfile": "BROADBAND",
+      "geoPreset": "us_ny",
+      "devicePreset": "desktop_fhd",
+      "graphqlMocks": [
+        {
+          "id": "gql_seed_1",
+          "operationName": "GetCurrentUser",
+          "operationType": "query",
+          "mockData": {
+            "me": {
+              "id": "usr_admin_001",
+              "email": "admin@enterprise.io",
+              "role": "SUPER_ADMIN"
+            }
+          },
+          "statusCode": 200,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "name": "VIP Gold Shopper",
+      "folder": "E-Commerce",
+      "tags": ["#vip", "#checkout", "#mobile"],
+      "cookies": [
+        {
+          "name": "auth_session",
+          "value": "s_vip_7781bc920e118",
+          "domain": "localhost",
+          "path": "/",
+          "secure": true,
+          "httpOnly": true,
+          "sameSite": "lax"
+        },
+        {
+          "name": "tier",
+          "value": "gold",
+          "domain": "localhost",
+          "path": "/",
+          "secure": false,
+          "httpOnly": false,
+          "sameSite": "lax"
+        }
+      ],
+      "storage": {
+        "local": {
+          "user_id": "usr_vip_777",
+          "user_email": "alex.vip@shoppers.com",
+          "wallet_credits": "2500.00",
+          "vip_discount_pct": "20",
+          "free_shipping": "true",
+          "saved_card": "4111-2222-3333-4567"
+        },
+        "session": {
+          "cart_items_count": "3"
+        }
+      },
+      "headers": {
+        "X-Customer-Tier": "VIP_GOLD",
+        "X-Currency": "GBP"
+      },
+      "totpSecret": "JBSWY3DPEHPK3PXP",
+      "networkProfile": "FAST_4G",
+      "geoPreset": "uk_london",
+      "devicePreset": "iphone_16_pro"
+    },
+    {
+      "name": "Standard User (John Doe)",
+      "folder": "E-Commerce",
+      "tags": ["#customer", "#public"],
+      "cookies": [
+        {
+          "name": "auth_session",
+          "value": "s_std_112233aabbcc",
+          "domain": "localhost",
+          "path": "/",
+          "secure": false,
+          "httpOnly": true,
+          "sameSite": "lax"
+        },
+        {
+          "name": "logged_in",
+          "value": "true",
+          "domain": "localhost",
+          "path": "/",
+          "secure": false,
+          "httpOnly": false,
+          "sameSite": "lax"
+        }
+      ],
+      "storage": {
+        "local": {
+          "user_id": "usr_std_501",
+          "user_email": "john.doe@example.com",
+          "role": "CUSTOMER",
+          "locale": "en-US"
+        },
+        "session": {}
+      },
+      "headers": {},
+      "networkProfile": "BROADBAND"
+    },
+    {
+      "name": "Security Pentester (SQLi Probe)",
+      "folder": "DevSecOps",
+      "tags": ["#dast", "#security", "#pentest"],
+      "cookies": [
+        {
+          "name": "auth_session",
+          "value": "admin' OR '1'='1'--",
+          "domain": "localhost",
+          "path": "/",
+          "secure": true,
+          "httpOnly": true,
+          "sameSite": "lax"
+        }
+      ],
+      "storage": {
+        "local": {
+          "probe_payload": "<script>alert('XSS_TEST')</script>",
+          "sqli_vector": "admin' UNION SELECT 1,username,password FROM users--",
+          "test_mode": "security_pentest"
+        },
+        "session": {}
+      },
+      "headers": {
+        "X-Security-Test": "sqli_probe",
+        "X-Attacker-Vector": "true"
+      },
+      "networkProfile": "BROADBAND"
+    },
+    {
+      "name": "Field Agent (Offline & Slow 3G)",
+      "folder": "Field Operations",
+      "tags": ["#tablet", "#offline", "#flaky"],
+      "cookies": [
+        {
+          "name": "offline_sync_token",
+          "value": "sync_token_agent_404_offline",
+          "domain": "localhost",
+          "path": "/",
+          "secure": true,
+          "httpOnly": true,
+          "sameSite": "strict"
+        }
+      ],
+      "storage": {
+        "local": {
+          "agent_id": "agt_field_09",
+          "offline_queue_count": "12",
+          "device_status": "LOW_CONNECTIVITY"
+        },
+        "session": {}
+      },
+      "headers": {
+        "X-Device-Type": "FIELD_TABLET"
+      },
+      "networkProfile": "SLOW_3G",
+      "devicePreset": "ipad_air",
+      "ttlMinutes": 30
+    }
+  ]
+}

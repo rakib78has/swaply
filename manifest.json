@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "Swaply - QA Session & Role Switcher",
+  "version": "2.5.0",
+  "description": "Switch between QA roles, user sessions, and auth states instantly without logging out.",
+  "omnibox": {
+    "keyword": "qa"
+  },
+  "permissions": [
+    "cookies",
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "split-runner.html",
+        "split-runner.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "devtools_page": "devtools.html",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Swaply"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+Q",
+        "mac": "Alt+Shift+Q"
+      },
+      "description": "Open Swaply Popup"
+    },
+    "clean_slate_reset": {
+      "suggested_key": {
+        "default": "Alt+Shift+X",
+        "mac": "Alt+Shift+X"
+      },
+      "description": "Clean Slate: Instantly reset active domain session to guest state"
+    },
+    "toggle_role_watermark": {
+      "suggested_key": {
+        "default": "Alt+Shift+W",
+        "mac": "Alt+Shift+W"
+      },
+      "description": "Toggle in-page visual role watermark and colored border"
+    }
+  }
+}
